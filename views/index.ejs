@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encryptor System</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#150e07" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="10.5" width="16" height="10.5" rx="2.2"></rect>
+          <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"></path>
+        </svg>
+      </span>
+      <h1>Encryptor System</h1>
+    </div>
+    <p class="subtitle">Drop a <strong>.txt</strong>, <strong>.pdf</strong> or <strong>.docx</strong> file. Files are scanned in memory only &mdash; nothing is saved.</p>
+
+    <div id="dropZone" class="drop-zone" tabindex="0" role="button"
+         aria-label="Drop a file here or press Enter to browse">
+      <span class="drop-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff7a18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4"></path>
+          <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
+          <path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"></path>
+        </svg>
+      </span>
+      <p id="dropText">Drag &amp; drop your file here</p>
+      <p class="or">or</p>
+      <label class="browse" for="fileInput">Browse file</label>
+      <input type="file" id="fileInput" accept=".txt,.pdf,.docx,.md,.csv" hidden>
+    </div>
+
+    <p id="fileInfo" class="file-info">
+      <span class="chip" id="fileChip">
+        <span class="chip-dot" aria-hidden="true"></span>
+        <span class="chip-name" id="chipName"></span>
+        <span class="chip-size" id="chipSize"></span>
+      </span>
+    </p>
+
+    <div class="buttons">
+      <button id="encryptBtn" disabled><span>Encrypt</span></button>
+      <button id="decryptBtn" disabled><span>Decrypt</span></button>
+    </div>
+
+    <div id="resultBox" class="result-box" hidden>
+      <h2 id="resultTitle">Result</h2>
+      <textarea id="preview" readonly spellcheck="false" aria-label="Result preview"></textarea>
+      <button id="downloadBtn"><span>Download result</span></button>
+    </div>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </div>
+  <script src="/script.js"></script>
+</body>
+</html>

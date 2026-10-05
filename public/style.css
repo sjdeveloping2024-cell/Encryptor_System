@@ -1,0 +1,560 @@
+/* Encryptor System — black & orange theme
+   Motion is purposeful: the drop zone reacts to the pointer, buttons answer the click,
+   and everything collapses to a static state under prefers-reduced-motion. */
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+:root {
+  --bg: #08080a;
+  --bg-deep: #050506;
+  --surface: #111114;
+  --surface-2: #17171c;
+  --surface-3: #1e1e25;
+  --line: #2a2a33;
+  --line-soft: #1c1c23;
+
+  --orange: #ff7a18;
+  --orange-hot: #ffa04d;
+  --orange-deep: #d95f00;
+  --orange-glow: rgba(255, 122, 24, 0.35);
+
+  --text: #f4f4f5;
+  --text-dim: #9c9ca6;
+  --text-faint: #6a6a75;
+
+  --danger: #ff4d4d;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --font: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --mono: 'Cascadia Code', Consolas, 'SF Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px 64px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Ambient orange bloom, kept far from the content so contrast never drops. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(680px 420px at 50% -8%, rgba(255, 122, 24, 0.13), transparent 70%),
+    radial-gradient(520px 320px at 12% 105%, rgba(255, 122, 24, 0.07), transparent 70%);
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 660px;
+}
+
+/* ---------- header ---------- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: linear-gradient(145deg, var(--orange), var(--orange-deep));
+  box-shadow: 0 6px 18px rgba(255, 122, 24, 0.28);
+  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+
+.brand-mark svg { width: 22px; height: 22px; display: block; }
+
+.brand:hover .brand-mark {
+  transform: rotate(-8deg) scale(1.06);
+  box-shadow: 0 10px 26px rgba(255, 122, 24, 0.42);
+}
+
+h1 {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.subtitle strong { color: var(--orange-hot); font-weight: 600; }
+
+/* ---------- drop zone ---------- */
+
+.drop-zone {
+  position: relative;
+  isolation: isolate;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-lg);
+  padding: 44px 24px;
+  text-align: center;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+  cursor: pointer;
+  transition:
+    border-color 0.3s var(--ease),
+    background 0.3s var(--ease),
+    transform 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+
+/* Marching-ants ring, revealed while a file is dragged over. */
+.drop-zone::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angle),
+    transparent 0deg,
+    var(--orange) 40deg,
+    var(--orange-hot) 60deg,
+    transparent 110deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  animation: ants 2.4s linear infinite;
+  transition: opacity 0.3s var(--ease);
+}
+
+/* Orange wash that floods in on drag-over. */
+.drop-zone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(420px 180px at 50% 0%, var(--orange-glow), transparent 72%);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+}
+
+.drop-zone:hover { border-color: #3a3a46; }
+
+.drop-zone.drag-over {
+  border-color: var(--orange);
+  transform: scale(1.022);
+  box-shadow: 0 22px 60px -18px var(--orange-glow);
+}
+
+.drop-zone.drag-over::before,
+.drop-zone.drag-over::after { opacity: 1; }
+
+.drop-zone.drag-over::after { transform: scale(1); }
+
+/* Refuses a file type the tool cannot read. */
+.drop-zone.rejected {
+  border-color: var(--danger);
+  animation: shake 0.42s var(--ease-in-out);
+}
+
+.drop-zone.rejected::after {
+  opacity: 1;
+  background: radial-gradient(420px 180px at 50% 0%, rgba(255, 77, 77, 0.3), transparent 72%);
+}
+
+.drop-icon {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  transition: transform 0.45s var(--ease), background 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+
+.drop-icon svg { width: 25px; height: 25px; display: block; }
+
+.drop-zone.drag-over .drop-icon {
+  transform: translateY(-7px) scale(1.12);
+  background: var(--orange);
+  border-color: var(--orange);
+  animation: bob 1.1s var(--ease-in-out) infinite;
+}
+
+.drop-zone.drag-over .drop-icon svg { stroke: #12100e; }
+
+#dropText {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: color 0.3s var(--ease);
+}
+
+.drop-zone.drag-over #dropText { color: var(--orange-hot); }
+
+.or {
+  color: var(--text-faint);
+  margin: 9px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.browse {
+  display: inline-block;
+  padding: 9px 20px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.25s var(--ease), color 0.25s var(--ease);
+}
+
+.browse:hover {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #14100c;
+  transform: translateY(-2px);
+}
+
+.browse:active { transform: translateY(0) scale(0.97); }
+
+/* ---------- selected file chip ---------- */
+
+.file-info {
+  margin: 16px 0;
+  min-height: 0;
+  font-size: 14px;
+}
+
+.chip {
+  display: none;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  animation: chip-in 0.45s var(--ease) both;
+}
+
+.chip.show { display: flex; }
+
+.chip-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 4px rgba(255, 122, 24, 0.16);
+}
+
+.chip-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-size { color: var(--text-faint); font-size: 13px; flex: none; }
+
+/* ---------- buttons ---------- */
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+button {
+  position: relative;
+  flex: 1;
+  padding: 13px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.22s var(--ease),
+    box-shadow 0.28s var(--ease),
+    background 0.28s var(--ease),
+    border-color 0.28s var(--ease),
+    color 0.28s var(--ease),
+    opacity 0.2s linear;
+}
+
+/* Light sweeping across the face on hover. */
+button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 45%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.6s var(--ease);
+}
+
+button:hover:not(:disabled)::after { left: 125%; }
+
+button:hover:not(:disabled) { transform: translateY(-2px); }
+button:active:not(:disabled) { transform: translateY(0) scale(0.975); }
+
+button:focus-visible,
+.browse:focus-visible,
+.drop-zone:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+/* Click ripple, positioned by script.js. */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  animation: ripple 0.62s var(--ease) forwards;
+  z-index: -1;
+}
+
+#encryptBtn {
+  background: linear-gradient(145deg, var(--orange) 0%, var(--orange-deep) 100%);
+  color: #150e07;
+  box-shadow: 0 8px 22px -8px var(--orange-glow);
+}
+
+#encryptBtn:hover:not(:disabled) { box-shadow: 0 16px 38px -10px var(--orange-glow); }
+
+/* Ghost variant keeps the palette to two colours while separating the two actions. */
+#decryptBtn {
+  background: transparent;
+  border-color: var(--orange);
+  color: var(--orange);
+  box-shadow: inset 0 0 0 0 var(--orange);
+}
+
+#decryptBtn:hover:not(:disabled) {
+  background: var(--orange);
+  color: #150e07;
+  box-shadow: 0 16px 38px -12px var(--orange-glow);
+}
+
+#downloadBtn {
+  width: 100%;
+  margin-top: 12px;
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+#downloadBtn:hover:not(:disabled) {
+  border-color: var(--orange);
+  color: var(--orange-hot);
+}
+
+button:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Spinner replaces the label content while a request is in flight. */
+button[data-busy='true'] { pointer-events: none; }
+
+button[data-busy='true']::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 17px;
+  height: 17px;
+  margin: -8.5px 0 0 -8.5px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #150e07;
+  animation: spin 0.7s linear infinite;
+}
+
+#decryptBtn[data-busy='true']::before,
+#downloadBtn[data-busy='true']::before {
+  border-color: rgba(255, 122, 24, 0.28);
+  border-top-color: var(--orange);
+}
+
+button > span { position: relative; z-index: 1; }
+
+button[data-busy='true'] > span { opacity: 0; }
+
+/* ---------- result ---------- */
+
+.result-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  animation: rise 0.5s var(--ease) both;
+}
+
+.result-box[hidden] { display: none; }
+
+.result-box h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.result-box h2::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 4px rgba(255, 122, 24, 0.15);
+}
+
+#preview {
+  width: 100%;
+  height: 190px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  color: #d6d6dd;
+  padding: 12px;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#preview:focus { border-color: var(--orange); outline: none; }
+
+/* ---------- status ---------- */
+
+.status {
+  margin-top: 16px;
+  font-size: 14px;
+  min-height: 22px;
+  color: var(--orange-hot);
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+.status.show { opacity: 1; transform: none; }
+
+.status.error { color: var(--danger); }
+
+/* ---------- keyframes ---------- */
+
+@keyframes ants {
+  to { --angle: 360deg; }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(-7px) scale(1.12); }
+  50% { transform: translateY(-13px) scale(1.12); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-9px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes chip-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ripple {
+  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- accessibility ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .drop-zone.drag-over { transform: none; }
+}
+
+@media (max-width: 560px) {
+  body { padding: 32px 14px 48px; }
+  h1 { font-size: 23px; }
+  .drop-zone { padding: 34px 16px; }
+  .buttons { flex-direction: column; }
+}
